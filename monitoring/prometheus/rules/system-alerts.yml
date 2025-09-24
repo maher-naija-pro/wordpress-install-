@@ -1,0 +1,72 @@
+groups:
+  - name: system-alerts
+    rules:
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for more than 5 minutes on {{ $labels.instance }}"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 85% for more than 5 minutes on {{ $labels.instance }}"
+
+      # Disk space low
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk space is low"
+          description: "Disk usage is above 85% on {{ $labels.instance }} mount {{ $labels.mountpoint }}"
+
+      # Container down
+      - alert: ContainerDown
+        expr: up{job=~".*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container is down"
+          description: "Container {{ $labels.job }} has been down for more than 1 minute"
+
+      # WordPress slow response
+      - alert: WordPressSlowResponse
+        expr: nginx_http_request_duration_seconds{quantile="0.95"} > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WordPress response is slow"
+          description: "95th percentile response time is {{ $value }}s for {{ $labels.job }}"
+
+      # Database connection high
+      - alert: DatabaseConnectionsHigh
+        expr: pg_stat_database_numbackends / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connections are high"
+          description: "Database connection usage is {{ $value }}% on {{ $labels.instance }}"
+
+      # SSL certificate expiry
+      - alert: SSLCertificateExpiring
+        expr: (ssl_certificate_expiry_timestamp - time()) / 86400 < 30
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value }} days"

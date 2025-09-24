@@ -1,0 +1,267 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: wordpress_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-wordpress}
+      POSTGRES_USER: ${POSTGRES_USER:-wordpress}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wordpress_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - wordpress_network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-wordpress} -d ${POSTGRES_DB:-wordpress}",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # WordPress Application
+  wordpress:
+    image: wordpress:6.5-php8.3-fpm
+    container_name: wordpress_app
+    restart: unless-stopped
+    environment:
+      WORDPRESS_DB_HOST: postgres:5432
+      WORDPRESS_DB_NAME: ${POSTGRES_DB:-wordpress}
+      WORDPRESS_DB_USER: ${POSTGRES_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${POSTGRES_PASSWORD:-wordpress_password}
+      WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX:-wp_}
+      WORDPRESS_DEBUG: ${WORDPRESS_DEBUG:-false}
+      WORDPRESS_DEBUG_LOG: ${WORDPRESS_DEBUG_LOG:-false}
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./wordpress/wp-config.php:/var/www/html/wp-config.php
+    networks:
+      - wordpress_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: wordpress_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/ssl.conf:/etc/nginx/conf.d/ssl.conf
+      - wordpress_data:/var/www/html
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    networks:
+      - wordpress_network
+    depends_on:
+      - wordpress
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Let's Encrypt Certbot
+  certbot:
+    image: certbot/certbot:v2.5.0
+    container_name: wordpress_certbot
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    command: certonly --webroot --webroot-path=/var/www/certbot --email ${LETSENCRYPT_EMAIL:-admin@example.com} --agree-tos --no-eff-email -d ${DOMAIN_NAME:-localhost}
+    networks:
+      - wordpress_network
+
+  # Prometheus Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: wordpress_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention.time=200h"
+      - "--web.enable-lifecycle"
+    networks:
+      - monitoring_network
+      - wordpress_network
+
+  # Grafana Visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: wordpress_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin123}
+      GF_USERS_ALLOW_SIGN_UP: false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - monitoring_network
+    depends_on:
+      - prometheus
+
+  # Alertmanager
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: wordpress_alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+      - "--web.external-url=http://localhost:9093"
+    networks:
+      - monitoring_network
+    depends_on:
+      - prometheus
+
+  # Node Exporter for System Metrics
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: wordpress_node_exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+    networks:
+      - monitoring_network
+
+  # cAdvisor for Container Metrics
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: wordpress_cadvisor
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    networks:
+      - monitoring_network
+
+  # PostgreSQL Exporter
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: wordpress_postgres_exporter
+    restart: unless-stopped
+    ports:
+      - "9187:9187"
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-wordpress}:${POSTGRES_PASSWORD:-wordpress_password}@postgres:5432/${POSTGRES_DB:-wordpress}?sslmode=disable"
+    networks:
+      - monitoring_network
+      - wordpress_network
+    depends_on:
+      - postgres
+
+  # Nginx Exporter
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: wordpress_nginx_exporter
+    restart: unless-stopped
+    ports:
+      - "9113:9113"
+    command:
+      - "-nginx.scrape-uri=http://nginx:80/nginx_status"
+    networks:
+      - monitoring_network
+      - wordpress_network
+    depends_on:
+      - nginx
+
+  # Backup Monitor Service
+  backup-monitor:
+    build: ./monitoring/backup-monitor
+    container_name: wordpress_backup_monitor
+    restart: unless-stopped
+    ports:
+      - "9091:9091"
+    volumes:
+      - ./scripts:/scripts
+      - wordpress_data:/var/www/html
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    environment:
+      PROMETHEUS_URL: http://prometheus:9090
+      BACKUP_RETENTION_DAYS: 30
+    networks:
+      - monitoring_network
+      - wordpress_network
+    depends_on:
+      - prometheus
+
+  # Webhook Service
+  webhook:
+    image: adnanh/webhook:latest
+    container_name: wordpress_webhook
+    restart: unless-stopped
+    ports:
+      - "5001:9000"
+    volumes:
+      - ./monitoring/webhook/hooks.json:/etc/webhook/hooks.json
+      - ./monitoring/webhook/scripts:/scripts
+    networks:
+      - monitoring_network
+      - wordpress_network
+
+volumes:
+  wordpress_data:
+  postgres_data:
+  nginx_conf:
+  certbot_conf:
+  certbot_www:
+  prometheus_data:
+  grafana_data:
+  alertmanager_data:
+
+networks:
+  wordpress_network:
+    driver: bridge
+  monitoring_network:
+    driver: bridge

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "backup-notification",
+    "execute-command": "/scripts/backup-notification.sh",
+    "command-working-directory": "/scripts",
+    "response-message": "Backup notification processed",
+    "pass-arguments-to-command": [
+      {
+        "source": "payload",
+        "name": "alerts"
+      }
+    ]
+  },
+  {
+    "id": "critical-alert",
+    "execute-command": "/scripts/critical-alert.sh",
+    "command-working-directory": "/scripts",
+    "response-message": "Critical alert processed",
+    "pass-arguments-to-command": [
+      {
+        "source": "payload",
+        "name": "alerts"
+      }
+    ]
+  }
+]

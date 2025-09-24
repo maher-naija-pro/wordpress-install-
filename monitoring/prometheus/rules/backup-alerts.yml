@@ -1,0 +1,52 @@
+groups:
+  - name: backup-alerts
+    rules:
+      # Backup failure alerts
+      - alert: BackupFailed
+        expr: backup_status{status="failed"} == 1
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backup failed for {{ $labels.type }}"
+          description: "Backup process failed for {{ $labels.type }} at {{ $labels.timestamp }}"
+
+      # Backup age warnings
+      - alert: BackupTooOld
+        expr: time() - backup_timestamp > 172800 # 2 days
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backup is too old"
+          description: "Last backup for {{ $labels.type }} was {{ $labels.age }} ago"
+
+      # Backup size anomalies
+      - alert: BackupSizeAnomaly
+        expr: abs(backup_size - backup_size offset 1d) / backup_size offset 1d > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backup size anomaly detected"
+          description: "Backup size for {{ $labels.type }} changed by {{ $value | humanizePercentage }} from yesterday"
+
+      # Storage space low
+      - alert: BackupStorageLow
+        expr: backup_storage_free_percent < 15
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backup storage space is low"
+          description: "Only {{ $value }}% of backup storage space remaining"
+
+      # Backup process down
+      - alert: BackupProcessDown
+        expr: up{job="backup-monitor"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backup monitoring process is down"
+          description: "Backup monitoring service has been down for more than 1 minute"
