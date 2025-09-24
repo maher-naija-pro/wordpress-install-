@@ -15,6 +15,21 @@ A complete WordPress development environment with PostgreSQL, Nginx, SSL certifi
 - **Security headers** and rate limiting
 - **Health checks** for all services
 
+## Prerequisites
+
+Before starting, ensure you have Docker and Docker Compose installed on your Ubuntu system.
+
+### Install Docker and Docker Compose
+
+**Option 1: Use our automated installation script (Recommended)**
+```bash
+# Run the Docker installation script
+./install-docker.sh
+```
+
+**Option 2: Manual installation**
+Follow the [official Docker installation guide](https://docs.docker.com/engine/install/ubuntu/) for Ubuntu.
+
 ## Quick Start
 
 1. **Clone and setup environment:**
@@ -24,7 +39,12 @@ A complete WordPress development environment with PostgreSQL, Nginx, SSL certifi
    cp env.example .env
    ```
 
-2. **Configure environment variables:**
+2. **Install Docker (if not already installed):**
+   ```bash
+   ./install-docker.sh
+   ```
+
+3. **Configure environment variables:**
    Edit `.env` file with your settings:
    ```bash
    DOMAIN_NAME=yourdomain.com
@@ -33,7 +53,7 @@ A complete WordPress development environment with PostgreSQL, Nginx, SSL certifi
    GRAFANA_ADMIN_PASSWORD=your_grafana_password
    ```
 
-3. **Start the environment:**
+4. **Start the environment:**
    ```bash
    # Start all services
    docker-compose up -d
@@ -197,12 +217,50 @@ docker-compose ps
 5. Configure backup schedules
 6. Test all functionality
 
+## Docker Installation Script
+
+The project includes an automated Docker installation script (`install-docker.sh`) that:
+
+- **Removes old Docker packages** to avoid conflicts
+- **Adds Docker's official GPG key** and repository
+- **Installs Docker Engine** with all required components
+- **Installs Docker Compose** (standalone version)
+- **Configures permissions** for non-root users
+- **Verifies installation** with test containers
+- **Provides detailed logging** and error handling
+
+### Script Features
+
+- ✅ **Ubuntu version detection** and compatibility checks
+- ✅ **Prerequisite installation** (ca-certificates, curl, gnupg)
+- ✅ **GPG key verification** for security
+- ✅ **Repository configuration** with proper architecture detection
+- ✅ **Service management** (start, enable, verify)
+- ✅ **Permission configuration** for non-root usage
+- ✅ **Installation verification** with hello-world test
+- ✅ **Comprehensive error handling** and logging
+- ✅ **User-friendly output** with color-coded messages
+
+### Usage
+
+```bash
+# Make executable and run
+chmod +x install-docker.sh
+./install-docker.sh
+
+# Or run directly
+bash install-docker.sh
+```
+
+The script will guide you through the installation process and provide post-installation instructions.
+
 ## Support
 
 For issues and questions:
 - Check logs: `docker-compose logs`
 - Verify configuration: `docker-compose config`
 - Test connectivity: `docker-compose exec wordpress wp --info`
+- Docker installation issues: Check the script output and logs
 
 ## License
 
