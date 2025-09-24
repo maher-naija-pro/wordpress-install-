@@ -1,8 +1,6 @@
 global:
-  smtp_smarthost: "localhost:587"
+  smtp_smarthost: ""
   smtp_from: "alerts@yourdomain.com"
-  smtp_auth_username: ""
-  smtp_auth_password: ""
 
 route:
   group_by: ["alertname"]
@@ -21,22 +19,17 @@ route:
 receivers:
   - name: "web.hook"
     webhook_configs:
-      - url: "http://webhook:9000/hooks/backup-notification"
+      - url: "http://wordpress_webhook:9000/hooks/backup-notification"
         send_resolved: true
 
   - name: "critical-alerts"
     webhook_configs:
-      - url: "http://webhook:9000/hooks/critical-alert"
+      - url: "http://wordpress_webhook:9000/hooks/critical-alert"
         send_resolved: true
-    slack_configs:
-      - api_url: "${SLACK_WEBHOOK_URL}"
-        channel: "#alerts"
-        title: "Critical Alert: {{ .GroupLabels.alertname }}"
-        text: "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}"
 
   - name: "warning-alerts"
     webhook_configs:
-      - url: "http://webhook:9000/hooks/backup-notification"
+      - url: "http://wordpress_webhook:9000/hooks/backup-notification"
         send_resolved: true
 
 inhibit_rules:

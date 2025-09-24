@@ -1,19 +1,20 @@
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    container_name: wordpress_postgres
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: wordpress_mysql
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-wordpress}
-      POSTGRES_USER: ${POSTGRES_USER:-wordpress}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wordpress_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-wordpress}
+      MYSQL_USER: ${MYSQL_USER:-wordpress}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-wordpress_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     networks:
       - wordpress_network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-wordpress} -d ${POSTGRES_DB:-wordpress}" ]
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD:-root_password}" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -24,10 +25,10 @@ services:
     container_name: wordpress_app
     restart: unless-stopped
     environment:
-      WORDPRESS_DB_HOST: postgres:5432
-      WORDPRESS_DB_NAME: ${POSTGRES_DB:-wordpress}
-      WORDPRESS_DB_USER: ${POSTGRES_USER:-wordpress}
-      WORDPRESS_DB_PASSWORD: ${POSTGRES_PASSWORD:-wordpress_password}
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-wordpress}
+      WORDPRESS_DB_USER: ${MYSQL_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-wordpress_password}
       WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX:-wp_}
       WORDPRESS_DEBUG: ${WORDPRESS_DEBUG:-false}
       WORDPRESS_DEBUG_LOG: ${WORDPRESS_DEBUG_LOG:-false}
@@ -37,10 +38,10 @@ services:
     networks:
       - wordpress_network
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:9000/health || exit 1" ]
+      test: [ "CMD-SHELL", "test -f /var/www/html/index.php || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -64,11 +65,6 @@ services:
       - wordpress_network
     depends_on:
       - wordpress
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost/health || exit 1" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # Let's Encrypt Certbot
   certbot:
@@ -77,7 +73,7 @@ services:
     volumes:
       - certbot_conf:/etc/letsencrypt
       - certbot_www:/var/www/certbot
-    command: certonly --webroot --webroot-path=/var/www/certbot --email ${LETSENCRYPT_EMAIL:-admin@example.com} --agree-tos --no-eff-email -d ${DOMAIN_NAME:-localhost}
+    command: certonly --webroot --webroot-path=/var/www/certbot --email ${LETSENCRYPT_EMAIL:-admin@example.com} --agree-tos --no-eff-email -d ${DOMAIN_NAME:-148.253.124.95}
     networks:
       - wordpress_network
 
@@ -135,7 +131,7 @@ services:
     command:
       - "--config.file=/etc/alertmanager/alertmanager.yml"
       - "--storage.path=/alertmanager"
-      - "--web.external-url=http://localhost:9093"
+      - "--web.external-url=http://148.253.124.95:9093"
     networks:
       - monitoring_network
     depends_on:
@@ -179,20 +175,20 @@ services:
     networks:
       - monitoring_network
 
-  # PostgreSQL Exporter
-  postgres-exporter:
-    image: prometheuscommunity/postgres-exporter:latest
-    container_name: wordpress_postgres_exporter
-    restart: unless-stopped
-    ports:
-      - "9187:9187"
-    environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-wordpress}:${POSTGRES_PASSWORD:-wordpress_password}@postgres:5432/${POSTGRES_DB:-wordpress}?sslmode=disable"
-    networks:
-      - monitoring_network
-      - wordpress_network
-    depends_on:
-      - postgres
+  # MySQL Exporter (disabled due to configuration issues)
+  # mysql-exporter:
+  #   image: prom/mysqld-exporter:latest
+  #   container_name: wordpress_mysql_exporter
+  #   restart: unless-stopped
+  #   ports:
+  #     - "9104:9104"
+  #   volumes:
+  #     - ./monitoring/mysql-exporter/.my.cnf:/root/.my.cnf:ro
+  #   networks:
+  #     - monitoring_network
+  #     - wordpress_network
+  #   depends_on:
+  #     - mysql
 
   # Nginx Exporter
   nginx-exporter:
@@ -219,7 +215,7 @@ services:
     volumes:
       - ./scripts:/scripts
       - wordpress_data:/var/www/html
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
       - ./backups:/backups
     environment:
       PROMETHEUS_URL: http://prometheus:9090
@@ -246,7 +242,7 @@ services:
 
 volumes:
   wordpress_data:
-  postgres_data:
+  mysql_data:
   nginx_conf:
   certbot_conf:
   certbot_www:

@@ -19,11 +19,5 @@ chmod +x "$INSTALL_SCRIPT"
 echo "Starting Docker installation..."
 echo "This will install Docker Engine and Docker Compose on your Ubuntu system."
 echo
-read -p "Do you want to continue? (y/N): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    exec "$INSTALL_SCRIPT"
-else
-    echo "Installation cancelled."
-    exit 0
-fi
+echo "Proceeding with installation automatically..."
+exec "$INSTALL_SCRIPT"

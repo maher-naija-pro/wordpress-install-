@@ -35,7 +35,7 @@ define('WP_DEBUG_DISPLAY', false);
 // ** Security settings ** //
 define('DISALLOW_FILE_EDIT', true);
 define('DISALLOW_FILE_MODS', false);
-define('FORCE_SSL_ADMIN', true);
+define('FORCE_SSL_ADMIN', false);
 
 // ** Performance settings ** //
 define('WP_MEMORY_LIMIT', '256M');
@@ -54,16 +54,16 @@ define('FS_METHOD', 'direct');
 // define('WP_ALLOW_MULTISITE', true);
 
 // ** Custom settings ** //
-define('WP_HOME', 'https://' . (getenv('DOMAIN_NAME') ?: 'localhost'));
-define('WP_SITEURL', 'https://' . (getenv('DOMAIN_NAME') ?: 'localhost'));
+define('WP_HOME', 'http://148.253.124.95');
+define('WP_SITEURL', 'http://148.253.124.95');
 
 // ** SSL settings ** //
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
     $_SERVER['HTTPS'] = 'on';
 }
 
-// ** Database driver for PostgreSQL ** //
-define('DB_DRIVER', 'pgsql');
+// ** Database driver for MySQL ** //
+// MySQL is the default database for WordPress
 
 /* That's all, stop editing! Happy publishing. */
 
