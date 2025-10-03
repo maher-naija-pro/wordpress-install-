@@ -67,9 +67,9 @@ Follow the [official Docker installation guide](https://docs.docker.com/engine/i
 
 4. **Access services:**
    - WordPress: https://yourdomain.com
-   - Grafana: http://109.232.234.153:3000
-   - Prometheus: http://109.232.234.153:9090
-   - Alertmanager: http://109.232.234.153:9093
+   - Grafana: http://biyadin.com:3000
+   - Prometheus: http://biyadin.com:9090
+   - Alertmanager: http://biyadin.com:9093
 
 ## Services
 

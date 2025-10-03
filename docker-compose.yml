@@ -132,7 +132,7 @@ services:
     command:
       - "--config.file=/etc/alertmanager/alertmanager.yml"
       - "--storage.path=/alertmanager"
-      - "--web.external-url=http://109.232.234.153:9093"
+      - "--web.external-url=http://biyadin.com:9093"
     networks:
       - monitoring_network
     depends_on:

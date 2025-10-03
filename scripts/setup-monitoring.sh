@@ -17,6 +17,6 @@ echo "Checking service status..."
 docker-compose ps
 
 echo "Monitoring stack setup completed!"
-echo "Access Grafana at: http://109.232.234.153:3000 (admin/admin123)"
-echo "Access Prometheus at: http://109.232.234.153:9090"
-echo "Access Alertmanager at: http://109.232.234.153:9093"
+echo "Access Grafana at: http://biyadin.com:3000 (admin/admin123)"
+echo "Access Prometheus at: http://biyadin.com:9090"
+echo "Access Alertmanager at: http://biyadin.com:9093"

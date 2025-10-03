@@ -54,8 +54,8 @@ define('FS_METHOD', 'direct');
 // define('WP_ALLOW_MULTISITE', true);
 
 // ** Custom settings ** //
-define('WP_HOME', 'http://109.232.234.153');
-define('WP_SITEURL', 'http://109.232.234.153');
+define('WP_HOME', 'http://biyadin.com');
+define('WP_SITEURL', 'http://biyadin.com');
 
 // ** SSL settings ** //
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
