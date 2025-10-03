@@ -66,7 +66,7 @@ done
 
 # Test 7: Check WordPress accessibility
 echo "7. Testing WordPress accessibility..."
-if curl -f http://localhost > /dev/null 2>&1; then
+if curl -f http://109.232.234.153 > /dev/null 2>&1; then
     echo "   ✓ WordPress is accessible on port 80"
 else
     echo "   ⚠ WordPress not accessible on port 80 (may need SSL setup)"
@@ -74,13 +74,13 @@ fi
 
 # Test 8: Check monitoring services
 echo "8. Testing monitoring services..."
-if curl -f http://localhost:3000 > /dev/null 2>&1; then
+if curl -f http://109.232.234.153:3000 > /dev/null 2>&1; then
     echo "   ✓ Grafana is accessible on port 3000"
 else
     echo "   ✗ Grafana is not accessible"
 fi
 
-if curl -f http://localhost:9090 > /dev/null 2>&1; then
+if curl -f http://109.232.234.153:9090 > /dev/null 2>&1; then
     echo "   ✓ Prometheus is accessible on port 9090"
 else
     echo "   ✗ Prometheus is not accessible"
@@ -114,10 +114,10 @@ echo "============"
 echo "Environment test completed!"
 echo ""
 echo "Access URLs:"
-echo "- WordPress: http://localhost"
-echo "- Grafana: http://localhost:3000 (admin/admin123)"
-echo "- Prometheus: http://localhost:9090"
-echo "- Alertmanager: http://localhost:9093"
+echo "- WordPress: http://109.232.234.153"
+echo "- Grafana: http://109.232.234.153:3000 (admin/admin123)"
+echo "- Prometheus: http://109.232.234.153:9090"
+echo "- Alertmanager: http://109.232.234.153:9093"
 echo ""
 echo "Next steps:"
 echo "1. Configure your domain in .env file"

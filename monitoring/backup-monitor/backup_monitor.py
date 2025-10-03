@@ -10,7 +10,7 @@ import os
 import time
 import logging
 import subprocess
-import psycopg2
+import pymysql
 from datetime import datetime, timedelta
 from prometheus_client import start_http_server, Gauge, Counter, Info
 import requests
@@ -32,11 +32,11 @@ backup_errors = Counter('backup_errors_total', 'Total backup errors', ['type', '
 
 # Database connection parameters
 DB_CONFIG = {
-    'host': os.getenv('POSTGRES_HOST', 'postgres'),
-    'port': os.getenv('POSTGRES_PORT', '5432'),
-    'database': os.getenv('POSTGRES_DB', 'wordpress'),
-    'user': os.getenv('POSTGRES_USER', 'wordpress'),
-    'password': os.getenv('POSTGRES_PASSWORD', 'wordpress_password')
+    'host': os.getenv('MYSQL_HOST', 'mysql'),
+    'port': int(os.getenv('MYSQL_PORT', '3306')),
+    'database': os.getenv('MYSQL_DATABASE', 'wordpress'),
+    'user': os.getenv('MYSQL_USER', 'wordpress'),
+    'password': os.getenv('MYSQL_PASSWORD', 'wordpress_password')
 }
 
 # Backup configuration
@@ -50,7 +50,7 @@ class BackupMonitor:
     def check_database_connection(self):
         """Check if database is accessible"""
         try:
-            conn = psycopg2.connect(**DB_CONFIG)
+            conn = pymysql.connect(**DB_CONFIG)
             conn.close()
             return True
         except Exception as e:
@@ -60,10 +60,11 @@ class BackupMonitor:
     def get_database_size(self):
         """Get database size in bytes"""
         try:
-            conn = psycopg2.connect(**DB_CONFIG)
+            conn = pymysql.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            cursor.execute("SELECT pg_database_size(current_database());")
-            size = cursor.fetchone()[0]
+            cursor.execute("SELECT ROUND(SUM(data_length + index_length) / 1024 / 1024, 1) AS 'DB Size in MB' FROM information_schema.tables WHERE table_schema = %s", (DB_CONFIG['database'],))
+            result = cursor.fetchone()
+            size = int(result[0] * 1024 * 1024) if result and result[0] else 0
             cursor.close()
             conn.close()
             return size

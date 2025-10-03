@@ -10,7 +10,7 @@
 define('DB_NAME', getenv('WORDPRESS_DB_NAME') ?: 'wordpress');
 define('DB_USER', getenv('WORDPRESS_DB_USER') ?: 'wordpress');
 define('DB_PASSWORD', getenv('WORDPRESS_DB_PASSWORD') ?: 'wordpress_password');
-define('DB_HOST', getenv('WORDPRESS_DB_HOST') ?: 'postgres:5432');
+define('DB_HOST', getenv('WORDPRESS_DB_HOST') ?: 'mysql:3306');
 define('DB_CHARSET', 'utf8');
 define('DB_COLLATE', '');
 
@@ -54,8 +54,8 @@ define('FS_METHOD', 'direct');
 // define('WP_ALLOW_MULTISITE', true);
 
 // ** Custom settings ** //
-define('WP_HOME', 'http://148.253.124.95');
-define('WP_SITEURL', 'http://148.253.124.95');
+define('WP_HOME', 'http://109.232.234.153');
+define('WP_SITEURL', 'http://109.232.234.153');
 
 // ** SSL settings ** //
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
@@ -64,6 +64,7 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
 
 // ** Database driver for MySQL ** //
 // MySQL is the default database for WordPress
+define('DB_DRIVER', 'mysql');
 
 /* That's all, stop editing! Happy publishing. */
 

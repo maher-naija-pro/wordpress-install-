@@ -488,7 +488,7 @@ wordpress-docker/
 7. **Security Hardening**: Apply security configurations
 8. **Backup Setup**: Configure automated backups
 9. **Monitoring Setup**: Run `./scripts/setup-monitoring.sh`
-10. **Grafana Configuration**: Access Grafana at http://localhost:3000 and import dashboards
+10. **Grafana Configuration**: Access Grafana at http://109.232.234.153:3000 and import dashboards
 11. **Alert Configuration**: Configure notification channels in Alertmanager
 
 ## Troubleshooting

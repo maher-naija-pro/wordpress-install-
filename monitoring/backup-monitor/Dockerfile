@@ -2,7 +2,7 @@ FROM python:3.11-alpine
 
 # Install required packages
 RUN apk add --no-cache \
-    postgresql-client \
+    mysql-client \
     rsync \
     gzip \
     tar
