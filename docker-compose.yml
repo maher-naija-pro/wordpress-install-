@@ -61,6 +61,7 @@ services:
       - wordpress_data:/var/www/html
       - certbot_conf:/etc/letsencrypt
       - certbot_www:/var/www/certbot
+      - ./certs:/etc/nginx/certs
     networks:
       - wordpress_network
     depends_on:
@@ -73,7 +74,7 @@ services:
     volumes:
       - certbot_conf:/etc/letsencrypt
       - certbot_www:/var/www/certbot
-    command: certonly --webroot --webroot-path=/var/www/certbot --email ${LETSENCRYPT_EMAIL:-admin@example.com} --agree-tos --no-eff-email -d ${DOMAIN_NAME:-109.232.234.153}
+    command: sh -c "trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;"
     networks:
       - wordpress_network
 

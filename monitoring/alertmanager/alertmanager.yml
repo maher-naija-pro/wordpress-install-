@@ -1,6 +1,6 @@
 global:
   smtp_smarthost: ""
-  smtp_from: "alerts@yourdomain.com"
+  smtp_from: "alerts@biyadin.com"
 
 route:
   group_by: ["alertname"]
